@@ -18,6 +18,7 @@ import argparse
 import errno
 import http.server
 import json
+import os
 import socket
 import struct
 import sys
@@ -126,14 +127,29 @@ def local_ips():
     return sorted(ip for ip in ips if not ip.startswith("127."))
 
 
+class Server(http.server.ThreadingHTTPServer):
+    # On Windows SO_REUSEADDR lets a second program silently share a busy port; ask for exclusive use instead.
+    allow_reuse_address = os.name != "nt"
+
+    def server_bind(self):
+        if os.name == "nt":
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+
+def port_busy(e):
+    # Windows reports a port held by another program as WSAEADDRINUSE (10048) or WSAEACCES (10013).
+    return e.errno in (errno.EADDRINUSE, errno.EACCES) or getattr(e, "winerror", None) in (10048, 10013)
+
+
 def start_server(bind, port, explicit_port):
     """Bind the web server; if the default port is taken, try the next few."""
     tries = 1 if explicit_port else 20
     for p in range(port, port + tries):
         try:
-            return http.server.ThreadingHTTPServer((bind, p), Handler)
+            return Server((bind, p), Handler)
         except OSError as e:
-            if e.errno not in (errno.EADDRINUSE, getattr(errno, "WSAEADDRINUSE", -1)) and getattr(e, "winerror", None) != 10048:
+            if not port_busy(e):
                 raise
     raise SystemExit(f"Port {port} is already in use. Pick another one with --port.")
 
