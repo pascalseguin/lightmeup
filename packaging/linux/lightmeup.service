@@ -1,0 +1,23 @@
+# Optional: run LightMeUp as a background service (installed by the .deb, not enabled).
+#   sudo systemctl enable --now lightmeup
+# To reach it from other devices or send to one controller, override ExecStart:
+#   sudo systemctl edit lightmeup
+#   [Service]
+#   ExecStart=
+#   ExecStart=/usr/bin/python3 /opt/lightmeup/server.py --no-browser --bind 0.0.0.0 --target 192.168.1.50
+[Unit]
+Description=LightMeUp show builder + sACN live bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/lightmeup/server.py --no-browser --port 8085
+DynamicUser=yes
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

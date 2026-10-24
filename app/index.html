@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LightMeUp Show Builder</title>
+<link rel="icon" href="favicon.png">
+<style>
+:root {
+  --bg: #0d0f14; --panel: #161921; --panel2: #1e222c; --line: #2b303c; --text: #e8eaef; --muted: #8d95a6;
+  --accent: #ff8a1f; --accent-ink: #1a0e00; --good: #3ecf8e; --bad: #ff5c5c; --sel: rgba(255,138,31,.14);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, select, input { font: inherit; color: inherit; }
+button { background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 11px; cursor: pointer; white-space: nowrap; }
+button:hover { border-color: #444b5b; background: #252a35; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button.on { background: var(--sel); border-color: var(--accent); color: var(--accent); }
+button.danger { color: var(--bad); }
+input[type=text], input[type=number], select { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; min-width: 0; }
+input[type=color] { width: 38px; height: 30px; padding: 2px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+input[type=range] { accent-color: var(--accent); width: 100%; }
+label.f { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+kbd { background: var(--panel2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 12px; }
+
+#app { display: grid; grid-template-rows: auto minmax(220px, 1fr) auto minmax(200px, 42vh); height: 100vh; }
+header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.logo { font-weight: 800; letter-spacing: .5px; font-size: 17px; margin-right: 6px; }
+.logo span { color: var(--accent); }
+#projName { width: 180px; }
+.spacer { flex: 1; }
+details.menu { position: relative; }
+details.menu > summary { list-style: none; }
+details.menu > summary::-webkit-details-marker { display: none; }
+details.menu .pop { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 6px; display: grid; gap: 4px; min-width: 250px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+details.menu .pop button { text-align: left; border-color: transparent; background: none; }
+details.menu .pop button:hover { background: var(--panel2); }
+details.menu .pop small { display: block; color: var(--muted); font-size: 11.5px; }
+#liveBtn .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; }
+#liveBtn.on .dot { background: var(--good); box-shadow: 0 0 8px var(--good); }
+
+main { display: grid; grid-template-columns: 1fr 330px; min-height: 0; }
+#stageWrap { position: relative; min-height: 0; overflow: hidden; }
+#stage { position: absolute; inset: 0; width: 100%; height: 100%; }
+#hint { position: absolute; left: 12px; top: 10px; color: var(--muted); font-size: 12.5px; background: rgba(13,15,20,.7); padding: 4px 9px; border-radius: 6px; pointer-events: none; }
+aside { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 12px; display: grid; gap: 12px; align-content: start; }
+aside h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.propList { display: grid; gap: 4px; }
+.propItem { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; padding: 7px 9px; border-radius: 7px; border: 1px solid transparent; cursor: pointer; }
+.propItem:hover { background: var(--panel2); }
+.propItem.sel { border-color: var(--accent); background: var(--sel); }
+.propItem .sw { width: 12px; height: 12px; border-radius: 50%; }
+.propItem small { color: var(--muted); }
+.card { background: var(--panel2); border: 1px solid var(--line); border-radius: 9px; padding: 10px; display: grid; gap: 9px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pose { display: grid; gap: 2px; }
+.pose .lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.pose .lbl b { color: var(--text); font-variant-numeric: tabular-nums; }
+.warn { color: #ffc46b; font-size: 12.5px; }
+.muted { color: var(--muted); font-size: 12.5px; }
+
+#bar { display: flex; gap: 6px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+#bar .grp { display: flex; gap: 4px; align-items: center; padding-right: 8px; margin-right: 2px; border-right: 1px solid var(--line); }
+#bar .grp:last-child { border-right: 0; }
+#time { font-variant-numeric: tabular-nums; min-width: 120px; font-weight: 600; }
+#playBtn { min-width: 74px; }
+#durInput { width: 70px; }
+
+#tlArea { display: grid; grid-template-rows: 1fr auto; min-height: 0; background: var(--panel); }
+#tlWrap { overflow-y: auto; overflow-x: hidden; min-height: 0; }
+#tl { display: block; touch-action: none; }
+#hs { overflow-x: auto; overflow-y: hidden; height: 14px; margin-left: 150px; }
+#hsInner { height: 1px; }
+
+.modalBg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.modal { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; width: min(560px, 100%); max-height: 90vh; overflow: auto; padding: 18px; display: grid; gap: 12px; }
+.modal h2 { margin: 0; font-size: 18px; }
+.modal p { margin: 0; color: var(--muted); }
+.modal .actions { display: flex; justify-content: flex-end; gap: 8px; }
+.modal table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.modal td, .modal th { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+.modal ol { margin: 0; padding-left: 20px; display: grid; gap: 7px; }
+.busy { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); z-index: 60; font-weight: 600; }
+
+@media (max-width: 860px) {
+  #app { grid-template-rows: auto auto auto minmax(260px, 50vh); height: auto; min-height: 100vh; }
+  main { grid-template-columns: 1fr; }
+  #stageWrap { height: 260px; }
+  aside { border-left: 0; border-top: 1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">Light<span>Me</span>Up</div>
+    <input id="projName" type="text" title="Show name">
+    <button id="songBtn" class="primary" title="Load the music (MP3, WAV, OGG...)">♪ Load song</button>
+    <span id="songName" class="muted"></span>
+    <div class="spacer"></div>
+    <button id="newBtn">New</button>
+    <button id="openBtn">Open…</button>
+    <button id="saveBtn">Save</button>
+    <details class="menu" id="exportMenu">
+      <summary><button tabindex="-1" style="pointer-events:none">Export ▾</button></summary>
+      <div class="pop">
+        <button data-export="fseq">Sequence for FPP / xLights (.fseq)<small>Play on Falcon Player alongside the song</small></button>
+        <button data-export="csv">Channel data spreadsheet (.csv)<small>Every DMX value at every frame</small></button>
+        <button data-export="map">Channel map / wiring sheet<small>Which DMX address each Arduino needs</small></button>
+      </div>
+    </details>
+    <button id="liveBtn" title="Send DMX to the real skeletons and lights through server.py"><span class="dot"></span>Live output</button>
+    <button id="helpBtn" title="How to use">?</button>
+  </header>
+
+  <main>
+    <div id="stageWrap">
+      <canvas id="stage"></canvas>
+      <div id="hint">Space = play/pause · drag on the time ruler to select a section</div>
+    </div>
+    <aside>
+      <div class="row" style="justify-content:space-between">
+        <h3>Your setup</h3>
+        <div class="row">
+          <button id="addSkel">+ Skeleton</button>
+          <button id="addLight">+ Light</button>
+        </div>
+      </div>
+      <div id="propList" class="propList"></div>
+      <div id="patchWarn" class="warn"></div>
+      <div id="propEdit"></div>
+    </aside>
+  </main>
+
+  <div id="bar">
+    <div class="grp">
+      <button id="playBtn" class="primary">▶ Play</button>
+      <button id="stopBtn" title="Back to start (Home)">⏮</button>
+      <span id="time">0:00.00</span>
+      <button id="loopBtn" title="Loop the selected section">⟲ Loop</button>
+    </div>
+    <div class="grp" title="Editing tool">
+      <button data-tool="select" class="on" title="Click to add a point, drag points to move, right-click to delete (V)">✥ Points</button>
+      <button data-tool="draw" title="Drag across a track to paint movement freehand (D)">✎ Draw</button>
+      <button data-tool="erase" title="Drag across a track to erase points (E)">⌫ Erase</button>
+    </div>
+    <div class="grp">
+      <button id="autoMouth" title="Make a skeleton's mouth follow the singing">🗣 Auto mouth</button>
+      <button id="autoLights" title="Make lights pulse or follow the music">💡 Auto lights</button>
+      <button id="autoBody" title="Make a skeleton turn and look around">↻ Auto turn</button>
+      <button id="clearTrack" class="danger" title="Clear the selected track (or the selected section of it)">Clear</button>
+    </div>
+    <div class="grp">
+      <button id="undoBtn" title="Undo (Ctrl+Z)">↶</button>
+      <button id="redoBtn" title="Redo (Ctrl+Y)">↷</button>
+      <button id="zoomOut" title="Zoom out (-)">−</button>
+      <button id="zoomIn" title="Zoom in (+)">+</button>
+      <span class="muted">Length</span>
+      <input id="durInput" type="number" min="1" step="1" title="Show length in seconds (set automatically from the song)">
+      <span class="muted">s</span>
+    </div>
+  </div>
+
+  <div id="tlArea">
+    <div id="tlWrap"><canvas id="tl"></canvas></div>
+    <div id="hs"><div id="hsInner"></div></div>
+  </div>
+</div>
+
+<input type="file" id="songFile" accept="audio/*" hidden>
+<input type="file" id="projFile" accept=".json,.lightmeup,application/json" hidden>
+
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
